@@ -986,50 +986,86 @@ function updateStats() {
 }
 
 /* ── Render card ── */
-function renderCard(f, r, delay) {
-  let card = document.getElementById('card-'+f.key);
-  const isNew = !card;
-  if (isNew) {
-    card = document.createElement('div');
-    card.id = 'card-'+f.key;
-    if (delay !== undefined) card.style.animationDelay = (delay * 0.03) + 's';
-    document.getElementById('cards').appendChild(card);
-  }
-
-  const s = r.state;
-  card.className = 'card ' + (s === 'loading' ? 'loading' : s);
-
-  let chip;
-  if (s === 'loading') {
-    chip = `<span class="chip chip-load"><span class="spin"></span></span>`;
-  } else if (s === 'blocked') {
-    chip = `<span class="chip chip-bl"><span class="chip-dot"></span>Blocked</span>`;
-  } else if (s === 'allowed') {
-    chip = `<span class="chip chip-al"><span class="chip-dot"></span>Allowed</span>`;
-  } else {
-    chip = `<span class="chip chip-er"><span class="chip-dot"></span>Error</span>`;
-  }
-
-  const catText = s === 'error'
-    ? (r.errorMsg || 'Unknown error')
-    : (r.category || (s === 'loading' ? 'Checking…' : '—'));
+function renderCard(f, r, delay=0) {
+  const cardsEl = document.getElementById('cards');
+  let card = document.createElement('div');
+  card.className = 'card loading';
+  card.style.animationDelay = delay + 's';
 
   card.innerHTML = `
     <div class="card-top">
       <div class="card-ico">
-        <img src="${fav(f.domain)}" alt=""
-          onerror="this.style.display='none';this.nextSibling.style.display='block'">
+        <img src="${fav(f.domain)}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='block'">
         <div class="cfb">${f.short}</div>
       </div>
-      ${chip}
+      <div class="chip chip-load"><span class="chip-dot"></span> loading...</div>
     </div>
     <div class="card-body">
       <div class="card-name">${f.name}</div>
-      <div class="card-cat" title="${catText}">${catText}</div>
-      ${r.ms != null ? `<div class="card-ms">${r.ms} ms</div>` : ''}
+      <div class="card-cat">—</div>
+      <div class="card-ms">— ms</div>
     </div>
   `;
+  cardsEl.appendChild(card);
+  results[f.key] = { state: 'loading' };
+  return card;
 }
+
+/* ── Update a card ── */
+function updateCard(card, f, data) {
+  const r = classify(data, data?._httpErr:null);
+  card.classList.remove('loading', 'blocked', 'allowed', 'error');
+  card.classList.add(r.state === 'blocked' ? 'blocked' : r.state === 'allowed' ? 'allowed' : 'error');
+
+  const chip = card.querySelector('.chip');
+  chip.className = 'chip ' + (r.state==='blocked'?'chip-bl':r.state==='allowed'?'chip-al':'chip-er');
+  chip.innerHTML = r.state==='blocked' ? 'Blocked' : r.state==='allowed' ? 'Allowed' : 'Error';
+
+  card.querySelector('.card-cat').textContent = r.category || '—';
+  card.querySelector('.card-ms').textContent = r.ms ? `${r.ms} ms` : '—';
+
+  results[f.key] = r;
+  updateStats();
+}
+
+/* ── Start scan ── */
+async function scanUrl() {
+  if (running) return;
+  running = true;
+  hideErr();
+  document.getElementById('resultsWrap').style.display = 'block';
+  document.getElementById('cards').innerHTML = '';
+  results = {};
+  setStatus('Scanning...', 'scanning');
+
+  const url = cleanUrl(document.getElementById('urlInput').value);
+  if (!url) { showErr('Please enter a valid URL'); setStatus('Ready'); running=false; return; }
+
+  const selectedFilters = FILTERS.filter(f => selected.has(f.key));
+
+  selectedFilters.forEach((f, i) => renderCard(f, {state:'loading'}, i*0.05));
+
+  for (const f of selectedFilters) {
+    try {
+      const res = await fetch(`https://live.glseries.net/api/v1/check?token=${TOKEN}&url=${url}&filter=${f.key}`);
+      const data = await res.json();
+      const card = document.querySelector(`.card:nth-child(${selectedFilters.indexOf(f)+1})`);
+      updateCard(card, f, data);
+    } catch(err) {
+      const card = document.querySelector(`.card:nth-child(${selectedFilters.indexOf(f)+1})`);
+      updateCard(card, f, { _httpErr: err.message });
+    }
+  }
+
+  setStatus('Done', '');
+  running = false;
+}
+
+/* ── Bind button ── */
+document.getElementById('scanBtn').addEventListener('click', scanUrl);
+document.getElementById('urlInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') scanUrl();
+});
 
 /* ── MAIN SCAN ── */
 async function runScan() {
