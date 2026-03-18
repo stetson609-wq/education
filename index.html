@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Sets | Quizlet</title>
+
+<link rel="icon" href="https://quizlet.com/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:   #080909;
+  --s1:   #0e0f10;
+  --s2:   #141516;
+  --s3:   #1c1d1e;
+  --s4:   #242526;
+  --e1:   #202122;
+  --e2:   #2c2d2f;
+  --e3:   #3a3b3d;
+  --e4:   #484a4c;
+
+  --t1:   #eeeeed;
+  --t2:   #9fa09e;
+  --t3:   #5c5d5b;
+  --t4:   #333432;
+
+  --sans:  'Instrument Sans', sans-serif;
+  --serif: 'Instrument Serif', serif;
+  --mono:  'JetBrains Mono', monospace;
+
+  --out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--t1);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── CANVAS ── */
+#canvas {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── AMBIENT ── */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 0%,   rgba(255,255,255,0.03) 0%, transparent 65%),
+    radial-gradient(ellipse 35% 30% at 10% 60%,  rgba(255,255,255,0.015) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 90% 40%,  rgba(255,255,255,0.015) 0%, transparent 60%);
+}
+
+/* ── CARD ── */
+.card {
+  position: relative; z-index: 1;
+  width: 420px;
+  background: var(--s1);
+  border: 1px solid var(--e1);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 32px rgba(0,0,0,0.5);
+  animation: cardIn 0.8s var(--out) both;
+  overflow: hidden;
+}
+
+/* top shimmer line */
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HEADER ── */
+.card-header {
+  text-align: center;
+  margin-bottom: 28px;
+  animation: fadeUp 0.7s 0.15s var(--out) both;
+}
+
+.header-mark {
+  width: 40px; height: 40px;
+  background: var(--t1);
+  border-radius: 12px;
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 24px rgba(238,238,237,0.15);
+  animation: markIn 0.7s 0.1s var(--spring) both;
+}
+@keyframes markIn {
+  from { opacity:0; transform: scale(0.7) rotate(-10deg); }
+  to   { opacity:1; transform: scale(1) rotate(0deg); }
+}
+.header-mark svg {
+  width: 20px; height: 20px;
+  stroke: var(--bg); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.card-title {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  color: var(--t1);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.card-sub {
+  font-size: 0.75rem;
+  color: var(--t3);
+  letter-spacing: 0.01em;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--e1), transparent);
+  margin: 0 -4px 24px;
+  animation: fadeUp 0.6s 0.25s var(--out) both;
+}
+
+/* ── MENU BUTTONS ── */
+.menu { display: flex; flex-direction: column; gap: 8px; }
+
+.menu-btn {
+  width: 100%;
+  padding: 0;
+  background: none; border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 14px;
+  transition: transform 0.2s var(--out);
+}
+.menu-btn:hover { transform: translateY(-1px); }
+.menu-btn:active { transform: translateY(0); }
+
+.menu-btn-inner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  background: var(--s2);
+  border: 1px solid var(--e1);
+  border-radius: 14px;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.menu-btn-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+}
+.menu-btn.active .menu-btn-inner,
+.menu-btn-inner:hover {
+  background: var(--s3);
+  border-color: var(--e2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.menu-btn-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--s4);
+  border: 1px solid var(--e2);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.menu-btn.active .menu-btn-icon {
+  background: var(--t1);
+  border-color: var(--t1);
+}
+.menu-btn-icon svg {
+  width: 16px; height: 16px;
+  stroke: var(--t3); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  transition: stroke 0.2s;
+}
+.menu-btn.active .menu-btn-icon svg { stroke: var(--bg); }
+
+.menu-btn-text { flex: 1; }
+.menu-btn-label {
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--t1); letter-spacing: -0.01em;
+  display: block; margin-bottom: 2px;
+}
+.menu-btn-desc {
+  font-size: 0.68rem; color: var(--t3);
+  line-height: 1.4;
+}
+
+.menu-btn-arrow {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  transition: transform 0.3s var(--out), opacity 0.3s;
+  opacity: 0.3;
+}
+.menu-btn.active .menu-btn-arrow { transform: rotate(90deg); opacity: 0.6; }
+.menu-btn-arrow svg {
+  width: 14px; height: 14px;
+  stroke: var(--t1); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── EXPAND PANEL ── */
+.panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    max-height 0.45s var(--out),
+    opacity    0.35s var(--out),
+    transform  0.35s var(--out);
+}
+.panel.open {
+  max-height: 600px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.panel-inner {
+  padding: 14px 4px 4px;
+}
+
+/* ── PANEL DESC ── */
+.panel-desc {
+  font-size: 0.75rem;
+  color: var(--t3);
+  line-height: 1.65;
+  margin-bottom: 14px;
+  padding: 0 2px;
+}
+
+/* ── API KEYS ── */
+.keys { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+
+.key-row {
+  display: flex; align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--e1);
+  border-radius: 10px;
+  padding: 10px 13px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.key-row:hover {
+  background: var(--s2);
+  border-color: var(--e2);
+}
+.key-row.copied {
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+}
+
+.key-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--e3); flex-shrink: 0;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.key-row.copied .key-dot {
+  background: var(--t1);
+  box-shadow: 0 0 6px rgba(238,238,237,0.5);
+}
+
+.key-text {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--t3);
+  letter-spacing: 0.03em;
+  transition: color 0.2s;
+}
+.key-row.copied .key-text { color: var(--t2); }
+
+.key-badge {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--t4);
+  padding: 2px 8px;
+  background: var(--s3);
+  border: 1px solid var(--e1);
+  border-radius: 4px;
+  transition: all 0.25s var(--out);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.key-row.copied .key-badge {
+  color: var(--t1);
+  background: var(--s4);
+  border-color: var(--e3);
+}
+
+/* ── PROCEED BUTTON ── */
+.proceed-btn {
+  width: 100%;
+  height: 42px;
+  background: var(--t1);
+  color: var(--bg);
+  border: none;
+  border-radius: 11px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 4px 16px rgba(0,0,0,0.5);
+  position: relative; overflow: hidden;
+}
+.proceed-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.proceed-btn:hover {
+  background: #e4e4e2;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 8px 28px rgba(0,0,0,0.6);
+}
+.proceed-btn:active { transform: translateY(0); }
+
+.proceed-btn svg {
+  width: 14px; height: 14px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── FOOTER ── */
+.card-footer {
+  margin-top: 22px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.58rem; color: var(--t4);
+  letter-spacing: 0.06em;
+  animation: fadeUp 0.6s 0.5s var(--out) both;
+}
+
+/* ── STAGGER ── */
+.menu-btn:nth-child(1) { animation: fadeUp 0.6s 0.25s var(--out) both; }
+.menu-btn:nth-child(2) { animation: fadeUp 0.6s 0.32s var(--out) both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── LAUNCH OVERLAY ── */
+#launchOverlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s var(--out);
+  display: flex; align-items: center; justify-content: center;
+}
+#launchOverlay.show { opacity: 1; pointer-events: all; }
+
+#launchFrame {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  border: none; z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.4s var(--out);
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div class="ambient"></div>
+
+<div class="card" id="mainCard">
+
+  <div class="card-header">
+    <div class="header-mark">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    </div>
+    <div class="card-title">Control Panel</div>
+    <div class="card-sub">Select a module to continue</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="menu">
+
+    <!-- AI -->
+    <div>
+      <button class="menu-btn" id="btnAI" onclick="togglePanel('ai')">
+        <div class="menu-btn-inner">
+          <div class="menu-btn-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          </div>
+          <div class="menu-btn-text">
+            <span class="menu-btn-label">AI</span>
+            <span class="menu-btn-desc">Access AI with API key authentication</span>
+          </div>
+          <div class="menu-btn-arrow">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </button>
+
+      <div class="panel" id="panel-ai">
+        <div class="panel-inner">
+          <p class="panel-desc">Copy an API key below, then paste it into the AI page when prompted.</p>
+          <div class="keys" id="keyList"></div>
+          <button class="proceed-btn" onclick="launch('/1.html')">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Open AI
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCKED -->
+    <div>
+      <button class="menu-btn" id="btnBlocked" onclick="togglePanel('blocked')">
+        <div class="menu-btn-inner">
+          <div class="menu-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="menu-btn-text">
+            <span class="menu-btn-label">Filter Check</span>
+            <span class="menu-btn-desc">Check any URL across 19 content filters</span>
+          </div>
+          <div class="menu-btn-arrow">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </button>
+
+      <div class="panel" id="panel-blocked">
+        <div class="panel-inner">
+          <p class="panel-desc">Instantly see if a URL is blocked by enterprise and education content filters — results stream in live, concurrently across 19 filters.</p>
+          <button class="proceed-btn" onclick="launch('/2.html')">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Open Filter Check
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card-footer">Secure Control Panel &mdash; v2.0</div>
+</div>
+
+<div id="launchOverlay"></div>
+<iframe id="launchFrame" src="about:blank"></iframe>
+
+<script>
+const _0x96737f=_0x2409;(function(_0x2f70ea,_0x22270a){const _0x46ac1d=_0x2409,_0x1de6f0=_0x2f70ea();while(!![]){try{const _0x2ec44a=parseInt(_0x46ac1d(0x181))/(0x16f2+0x1b*-0xa1+-0x5f6)+parseInt(_0x46ac1d(0x127))/(0xf8b*-0x2+-0x6a+-0x4a*-0x6d)*(-parseInt(_0x46ac1d(0x126))/(-0x5*0x65a+-0x191*-0xf+0x1*0x846))+-parseInt(_0x46ac1d(0x17a))/(-0x2*0x11fb+0x7*0x1de+0x16e8)*(parseInt(_0x46ac1d(0x116))/(0x2321+-0x23+-0x22f9))+-parseInt(_0x46ac1d(0x145))/(-0x2b*-0x63+-0x18a9+0x80e)+parseInt(_0x46ac1d(0x189))/(-0xcb6*-0x2+-0x14d*-0x11+0x17c1*-0x2)+parseInt(_0x46ac1d(0x19b))/(0x1*0x163b+0x8b*0x5+-0x18ea)*(-parseInt(_0x46ac1d(0x156))/(-0x1be3+-0x1e83+0x859*0x7))+parseInt(_0x46ac1d(0x12c))/(0x1f7e+0x39a*0x5+-0x1e7*0x1a);if(_0x2ec44a===_0x22270a)break;else _0x1de6f0['push'](_0x1de6f0['shift']());}catch(_0x5d3e61){_0x1de6f0['push'](_0x1de6f0['shift']());}}}(_0x45ed,0xb*-0x11f7c+0x4d4be*0x1+0x12d598),(function(){const _0x404eeb=_0x2409,_0x337a1b={'cFrjO':function(_0x1983ef,_0x5d829c){return _0x1983ef+_0x5d829c;},'FGXmN':function(_0xa7507d,_0x59e3c6){return _0xa7507d*_0x59e3c6;},'wIzlV':function(_0x12a42a,_0x5c3ca1){return _0x12a42a-_0x5c3ca1;},'bWKTC':function(_0x1a2c7e,_0x3a83b9,_0x2fb496){return _0x1a2c7e(_0x3a83b9,_0x2fb496);},'GcvVt':function(_0x1880f1,_0x4320fd,_0x17d2b2){return _0x1880f1(_0x4320fd,_0x17d2b2);},'LGpDF':function(_0x11a196,_0x49cca0,_0x52245c){return _0x11a196(_0x49cca0,_0x52245c);},'ojLfz':function(_0x123ddd,_0x413d63,_0x36b634){return _0x123ddd(_0x413d63,_0x36b634);},'hBYze':function(_0x42a8ab,_0x2cc999,_0x307a3e){return _0x42a8ab(_0x2cc999,_0x307a3e);},'bBIfx':function(_0x42d0bf,_0xdddafd,_0x15d5fd){return _0x42d0bf(_0xdddafd,_0x15d5fd);},'TLKKh':function(_0x1f3037,_0x5efdf3,_0x405f37){return _0x1f3037(_0x5efdf3,_0x405f37);},'JjqvY':function(_0x1863b3){return _0x1863b3();},'jromV':function(_0x2995b7,_0x589d52){return _0x2995b7/_0x589d52;},'hKLlk':function(_0x488d5b,_0x291247){return _0x488d5b<_0x291247;},'AyClH':function(_0x3a263f,_0x638fae){return _0x3a263f>_0x638fae;},'hQmsN':function(_0x4565ca,_0x5f157d){return _0x4565ca*_0x5f157d;},'ILGnr':function(_0x4a1386,_0x3a9d47){return _0x4a1386/_0x3a9d47;},'ugnWR':function(_0x323050,_0x8c18cb){return _0x323050/_0x8c18cb;},'CAtQC':function(_0x10ee70,_0x2daa33){return _0x10ee70*_0x2daa33;},'mEnJP':function(_0x4708a7,_0x477d92){return _0x4708a7*_0x477d92;},'ciKki':function(_0x2f7084,_0x5115ac){return _0x2f7084<_0x5115ac;},'XlXLx':function(_0x1f7a3e,_0x32ba1b){return _0x1f7a3e>_0x32ba1b;},'aGtMn':function(_0x1e01e8,_0x313cd2){return _0x1e01e8+_0x313cd2;},'smyCw':function(_0x1c92cc,_0x295bf2){return _0x1c92cc(_0x295bf2);},'qSQZV':function(_0x2bcc35,_0x197dba){return _0x2bcc35(_0x197dba);},'toDRu':_0x404eeb(0x1ab),'bCYmN':_0x404eeb(0x15d),'KpGLQ':_0x404eeb(0x187),'GIQPY':function(_0x61f93){return _0x61f93();}},_0x235e14=document[_0x404eeb(0x174)+_0x404eeb(0x169)](_0x337a1b[_0x404eeb(0x17c)]),_0x42f13e=_0x235e14[_0x404eeb(0x14e)]('2d');let _0x274495,_0x45b167,_0x437324,_0xa85843={'x':-(0x4*-0x11c8+0x2a97*0x1+-0x4d4*-0xe),'y':-(-0xb3a+0x1*-0x2417+0x5660)};function _0x245a29(){const _0x105548=_0x404eeb;_0x274495=_0x235e14[_0x105548(0x153)]=window[_0x105548(0x114)],_0x45b167=_0x235e14[_0x105548(0x191)]=window[_0x105548(0x10f)+'t'];}function _0x3dfb0e(_0x4ae1d9,_0x20e16c){const _0x33c0f5=_0x404eeb;return _0x337a1b[_0x33c0f5(0x168)](_0x4ae1d9,_0x337a1b[_0x33c0f5(0x18e)](Math[_0x33c0f5(0x182)](),_0x337a1b[_0x33c0f5(0x13b)](_0x20e16c,_0x4ae1d9)));}function _0x1053a8(){const _0x586900=_0x404eeb;return{'x':_0x337a1b[_0x586900(0x13f)](_0x3dfb0e,0x1*0x190b+-0x14*-0x52+0x1f73*-0x1,_0x274495),'y':_0x337a1b[_0x586900(0x161)](_0x3dfb0e,0xc6*0x17+-0x1cf9*-0x1+-0x2ec3,_0x45b167),'r':_0x337a1b[_0x586900(0x144)](_0x3dfb0e,0x12d0*-0x1+0xf16+0x3ba+0.35,-0x183a+0xcc9+-0x1*-0xb72+0.30000000000000004),'vx':_0x337a1b[_0x586900(0x144)](_0x3dfb0e,-(0x128*-0x1+0x11ae*0x1+-0x1086+0.1),0x119a+0x11e1+-0x237b+0.1),'vy':_0x337a1b[_0x586900(0x197)](_0x3dfb0e,-(-0x1fed+0x10b6+-0x1*-0xf37+0.2),-(-0xce+0x2*0x189+-0x244+0.05)),'a':_0x337a1b[_0x586900(0x14a)](_0x3dfb0e,0x226f+-0x97d*-0x1+-0x15f6*0x2+0.06,0xb6*0x17+-0x1a4e+0xc4*0xd+0.4),'ph':_0x337a1b[_0x586900(0x14c)](_0x3dfb0e,0x2*-0x1281+-0x252*-0x2+0x205e*0x1,_0x337a1b[_0x586900(0x18e)](Math['PI'],0x35*0x61+-0x1450+-0x3d*-0x1)),'ps':_0x337a1b[_0x586900(0x1a9)](_0x3dfb0e,0x227a+0xb62+-0x2ddc+0.006,0x108c*0x1+-0x8dc+0xc*-0xa4+0.018)};}function _0x19b9ff(_0x11e2ba){const _0x25f1c0=_0x404eeb;Object[_0x25f1c0(0x16e)](_0x11e2ba,_0x337a1b[_0x25f1c0(0x125)](_0x1053a8)),_0x11e2ba['y']=_0x337a1b[_0x25f1c0(0x168)](_0x45b167,0x2265+0x3e*0x2f+-0x2dbf),_0x11e2ba['a']=-0x1*-0xd87+0x1d85*0x1+-0x91*0x4c;}function _0x5d67b4(){const _0x3f3f46=_0x404eeb;_0x337a1b[_0x3f3f46(0x125)](_0x245a29);const _0x29463a=Math[_0x3f3f46(0x184)](Math[_0x3f3f46(0x12f)](_0x337a1b[_0x3f3f46(0x136)](_0x337a1b[_0x3f3f46(0x18e)](_0x274495,_0x45b167),0x1*0x7db+-0x1*-0x2c5b+0x78d*-0x2)),0x10e5*-0x2+-0x10*-0x101+-0x7*-0x2a2);_0x437324=Array[_0x3f3f46(0x192)]({'length':_0x29463a},_0x1053a8);}function _0x1eba53(){const _0xb3c5bb=_0x404eeb;_0x42f13e[_0xb3c5bb(0x14d)](-0x239e+0xea8+0x14f6,-0x3ee*-0x1+-0x9c5+0x5d7,_0x274495,_0x45b167),_0x437324[_0xb3c5bb(0x179)](_0x333f9d=>{const _0x4013e1=_0xb3c5bb;_0x333f9d['x']+=_0x333f9d['vx'],_0x333f9d['y']+=_0x333f9d['vy'],_0x333f9d['ph']+=_0x333f9d['ps'];const _0x29c9bc=_0x337a1b[_0x4013e1(0x13b)](_0xa85843['x'],_0x333f9d['x']),_0x3bfc53=_0x337a1b[_0x4013e1(0x13b)](_0xa85843['y'],_0x333f9d['y']),_0x8c96d8=Math[_0x4013e1(0x186)](_0x29c9bc,_0x3bfc53);_0x337a1b[_0x4013e1(0x1a7)](_0x8c96d8,0x6*0x3b3+0xc4b+-0x21c9)&&_0x337a1b[_0x4013e1(0x150)](_0x8c96d8,0x16*0x62+0x2ef*-0x7+0x1*0xc1d)&&(_0x333f9d['vx']+=_0x337a1b[_0x4013e1(0x147)](_0x337a1b[_0x4013e1(0x175)](_0x29c9bc,_0x8c96d8),-0x12be+-0x107*-0x6+0xc94+0.0025),_0x333f9d['vy']+=_0x337a1b[_0x4013e1(0x18e)](_0x337a1b[_0x4013e1(0x141)](_0x3bfc53,_0x8c96d8),-0x11ec+-0xe2*0xe+0x1e48+0.0025));_0x333f9d['vx']*=0x1b8+-0xe1e+-0xc66*-0x1+0.998,_0x333f9d['vy']=Math[_0x4013e1(0x184)](-(0xd*0x22d+0xc93+0x1*-0x28dc+0.03),Math[_0x4013e1(0x143)](-(0xc3+0x1ea+-0x2ad+0.38),_0x333f9d['vy']));const _0x16185f=_0x337a1b[_0x4013e1(0x118)](_0x333f9d['a'],_0x337a1b[_0x4013e1(0x168)](0x1e05+-0x166d*-0x1+-0x1*0x3472+0.65,_0x337a1b[_0x4013e1(0x17e)](-0x1*0x913+-0xaf*-0x4+0x657+0.35,Math[_0x4013e1(0x15b)](_0x333f9d['ph']))));_0x42f13e[_0x4013e1(0x11f)](),_0x42f13e[_0x4013e1(0x12e)](_0x333f9d['x'],_0x333f9d['y'],_0x333f9d['r'],-0x156f*-0x1+0x1f01*0x1+-0x347*0x10,_0x337a1b[_0x4013e1(0x18e)](Math['PI'],0x38b+0x35b*0x2+-0xa3f)),_0x42f13e[_0x4013e1(0x19a)]=_0x4013e1(0x185)+_0x4013e1(0x160)+_0x16185f[_0x4013e1(0x1a4)](0x1da1+-0x1a14+0x38a*-0x1)+')',_0x42f13e[_0x4013e1(0x137)]();if(_0x337a1b[_0x4013e1(0x124)](_0x333f9d['y'],-(-0x2*-0xc37+0x14e3*-0x1+0x1*-0x383))||_0x337a1b[_0x4013e1(0x1a7)](_0x333f9d['x'],-(-0x2df+-0xfb*-0x15+-0x11a4))||_0x337a1b[_0x4013e1(0x138)](_0x333f9d['x'],_0x337a1b[_0x4013e1(0x154)](_0x274495,-0xa29+0x147+-0x1f*-0x4a)))_0x337a1b[_0x4013e1(0x133)](_0x19b9ff,_0x333f9d);}),_0x337a1b[_0xb3c5bb(0x132)](requestAnimationFrame,_0x1eba53);}window[_0x404eeb(0x12d)+_0x404eeb(0x15a)](_0x337a1b[_0x404eeb(0x17b)],_0x5d67b4),window[_0x404eeb(0x12d)+_0x404eeb(0x15a)](_0x337a1b[_0x404eeb(0x163)],_0x3b3b06=>{const _0x213526=_0x404eeb;_0xa85843['x']=_0x3b3b06[_0x213526(0x152)],_0xa85843['y']=_0x3b3b06[_0x213526(0x157)];}),_0x337a1b[_0x404eeb(0x159)](_0x5d67b4),_0x337a1b[_0x404eeb(0x159)](_0x1eba53);}()));const KEY_DATA=[[_0x96737f(0x151),_0x96737f(0x135),_0x96737f(0x1aa),_0x96737f(0x18d)],[_0x96737f(0x151),_0x96737f(0x135),_0x96737f(0x1aa),_0x96737f(0x18d)],[_0x96737f(0x151),_0x96737f(0x135),_0x96737f(0x1aa),_0x96737f(0x18d)],[_0x96737f(0x151),_0x96737f(0x135),_0x96737f(0x1aa),_0x96737f(0x18d)],[_0x96737f(0x151),_0x96737f(0x135),_0x96737f(0x1aa),_0x96737f(0x18d)]];function _d(_0x514f5b){const _0x11f4a5=_0x96737f,_0x507541={'jUPAW':function(_0x4b02a6,_0x564e66){return _0x4b02a6(_0x564e66);}};return _0x507541[_0x11f4a5(0x11b)](atob,_0x514f5b);}function _r(_0x3eb569){const _0x24d433=_0x96737f;return _0x3eb569[_0x24d433(0x129)]('')[_0x24d433(0x149)]()[_0x24d433(0x193)]('');}function _m(_0x46416f){const _0x20d98f=_0x96737f;return _0x46416f[_0x20d98f(0x1a8)](_0x41ad31=>_r(_d(_0x41ad31)))[_0x20d98f(0x193)]('')[_0x20d98f(0x129)]('')[_0x20d98f(0x1a8)]((_0x2e4e8b,_0x17f8a3)=>String[_0x20d98f(0x195)+'de'](_0x2e4e8b[_0x20d98f(0x1a3)](0x907+0x2346+0x407*-0xb)-_0x17f8a3%(0x2*-0x4a7+0x1daa+-0x1*0x1459)))[_0x20d98f(0x193)]('');}const ENCODED_KEYS=KEY_DATA[_0x96737f(0x1a8)](_m),keyList=document[_0x96737f(0x174)+_0x96737f(0x169)](_0x96737f(0x177));ENCODED_KEYS[_0x96737f(0x179)](_0x3aacf8=>{const _0x3a1fe9=_0x96737f,_0x500e2a={'bZkJL':_0x3a1fe9(0x15e),'WnDwx':_0x3a1fe9(0x13a),'AeDfa':_0x3a1fe9(0x112),'SevxE':_0x3a1fe9(0x115),'vmxYv':_0x3a1fe9(0x140),'kuEhh':function(_0x29d257,_0x25bcfd,_0x56e35c){return _0x29d257(_0x25bcfd,_0x56e35c);},'qAfmL':function(_0x339339,_0xb4b007){return _0x339339+_0xb4b007;},'dALMP':_0x3a1fe9(0x1ac),'LVnUN':_0x3a1fe9(0x120),'UPELb':_0x3a1fe9(0x1a6)},_0x27ea1e=_0x500e2a[_0x3a1fe9(0x167)](_0x3aacf8[_0x3a1fe9(0x121)](-0x1197+-0x1fcb+0x56*0x93,0x1e18+0x79a+-0x25aa),'•'[_0x3a1fe9(0x188)](0x13*-0x13+-0x49*0x47+0x15b8)),_0x4cece1=document[_0x3a1fe9(0x158)+_0x3a1fe9(0x15f)](_0x500e2a[_0x3a1fe9(0x18c)]);_0x4cece1[_0x3a1fe9(0x16b)]=_0x500e2a[_0x3a1fe9(0x16a)],_0x4cece1[_0x3a1fe9(0x172)]=_0x3a1fe9(0x1ad)+_0x3a1fe9(0x14b)+_0x3a1fe9(0x123)+_0x3a1fe9(0x11d)+_0x3a1fe9(0x146)+_0x3a1fe9(0x13c)+_0x27ea1e+(_0x3a1fe9(0x11a)+_0x3a1fe9(0x134)+_0x3a1fe9(0x17d)+_0x3a1fe9(0x19c)+_0x3a1fe9(0x11a)),_0x4cece1[_0x3a1fe9(0x12d)+_0x3a1fe9(0x15a)](_0x500e2a[_0x3a1fe9(0x183)],()=>{const _0x361e27=_0x3a1fe9,_0x31f0a0={'sbKMr':_0x500e2a[_0x361e27(0x164)],'YEuLc':_0x500e2a[_0x361e27(0x113)],'TqdQq':_0x500e2a[_0x361e27(0x18a)]};navigator[_0x361e27(0x122)][_0x361e27(0x178)](_0x3aacf8)[_0x361e27(0x166)](()=>{}),document[_0x361e27(0x139)+_0x361e27(0x176)](_0x500e2a[_0x361e27(0x16d)])[_0x361e27(0x179)](_0x4c4950=>_0x4c4950[_0x361e27(0x165)][_0x361e27(0x19f)](_0x361e27(0x15e))),_0x4cece1[_0x361e27(0x165)][_0x361e27(0x117)](_0x500e2a[_0x361e27(0x164)]),_0x4cece1[_0x361e27(0x139)+_0x361e27(0x162)](_0x500e2a[_0x361e27(0x113)])[_0x361e27(0x1a5)+'t']=_0x500e2a[_0x361e27(0x196)],_0x500e2a[_0x361e27(0x1a1)](setTimeout,()=>{const _0x30b6cc=_0x361e27;_0x4cece1[_0x30b6cc(0x165)][_0x30b6cc(0x19f)](_0x31f0a0[_0x30b6cc(0x148)]),_0x4cece1[_0x30b6cc(0x139)+_0x30b6cc(0x162)](_0x31f0a0[_0x30b6cc(0x130)])[_0x30b6cc(0x1a5)+'t']=_0x31f0a0[_0x30b6cc(0x194)];},0x1fd4+-0x5d4*0x3+-0x688);}),keyList[_0x3a1fe9(0x199)+'d'](_0x4cece1);});const btnMap={'ai':_0x96737f(0x119),'blocked':_0x96737f(0x142)};let activePanel=null;function togglePanel(_0x450b68){const _0x4f749f=_0x96737f,_0x231e09={'VpyVb':function(_0x833f1d,_0x2cdfca){return _0x833f1d+_0x2cdfca;},'JoToQ':_0x4f749f(0x11e),'qietq':_0x4f749f(0x110),'yzwZE':_0x4f749f(0x13d),'ZTQNo':_0x4f749f(0x173),'YQfIv':_0x4f749f(0x10e)},_0x3d2044=document[_0x4f749f(0x174)+_0x4f749f(0x169)](_0x231e09[_0x4f749f(0x14f)](_0x231e09[_0x4f749f(0x1a2)],_0x450b68)),_0x2264c3=document[_0x4f749f(0x174)+_0x4f749f(0x169)](btnMap[_0x450b68]),_0x34ec0d=_0x3d2044[_0x4f749f(0x165)][_0x4f749f(0x111)](_0x231e09[_0x4f749f(0x16f)]);document[_0x4f749f(0x139)+_0x4f749f(0x176)](_0x231e09[_0x4f749f(0x15c)])[_0x4f749f(0x179)](_0x1e5766=>_0x1e5766[_0x4f749f(0x165)][_0x4f749f(0x19f)](_0x4f749f(0x110))),document[_0x4f749f(0x139)+_0x4f749f(0x176)](_0x231e09[_0x4f749f(0x171)])[_0x4f749f(0x179)](_0x1af2eb=>_0x1af2eb[_0x4f749f(0x165)][_0x4f749f(0x19f)](_0x4f749f(0x10e))),!_0x34ec0d?(_0x3d2044[_0x4f749f(0x165)][_0x4f749f(0x117)](_0x231e09[_0x4f749f(0x16f)]),_0x2264c3[_0x4f749f(0x165)][_0x4f749f(0x117)](_0x231e09[_0x4f749f(0x12b)]),activePanel=_0x450b68):activePanel=null;}function _0x2409(_0x24168f,_0x2c6abb){_0x24168f=_0x24168f-(-0x8*0xd0+0x17df+0x1051*-0x1);const _0x3fe291=_0x45ed();let _0x3f8540=_0x3fe291[_0x24168f];return _0x3f8540;}function _0x45ed(){const _0xc03f9c=['mousemove','repeat','6517770bihSdw','AeDfa','rWkRp','dALMP','ZlE9PQ==','FGXmN','origin','onload','height','from','join','TqdQq','fromCharCo','vmxYv','ojLfz','rWvIY','appendChil','fillStyle','8OPlwGZ','adge\x22>copy','src','launchOver','remove','launchFram','kuEhh','JoToQ','charCodeAt','toFixed','textConten','click','hKLlk','map','TLKKh','YlE9PQ==','canvas','div','\x0a\x20\x20\x20\x20<div\x20','active','innerHeigh','open','contains','copy','WnDwx','innerWidth','.key-row','469000fGNZXN','add','CAtQC','btnAI','</span>\x0a\x20\x20','jUPAW','FhoDu','v>\x0a\x20\x20\x20\x20<sp','panel-','beginPath','key-row','slice','clipboard','-dot\x22></di','ciKki','JjqvY','8187FLOkFG','498RGlFUw','show','split','style','YQfIv','7845560lsZPpN','addEventLi','arc','floor','YEuLc','FBGle','qSQZV','smyCw','\x20\x20<span\x20cl','V1E9PQ==','jromV','fill','XlXLx','querySelec','.key-badge','wIzlV','key-text\x22>','.panel','UvLeY','bWKTC','copied\x20✓','ugnWR','btnBlocked','max','LGpDF','1348626dMaVox','an\x20class=\x22','hQmsN','sbKMr','reverse','hBYze','class=\x22key','bBIfx','clearRect','getContext','VpyVb','AyClH','TUE9PQ==','clientX','width','aGtMn','UInQM','8366238TaruPX','clientY','createElem','GIQPY','stener','sin','yzwZE','resize','copied','ent','55,255,','GcvVt','tor','KpGLQ','bZkJL','classList','catch','qAfmL','cFrjO','ById','LVnUN','className','opacity','SevxE','assign','qietq','EXxrE','ZTQNo','innerHTML','.menu-btn','getElement','ILGnr','torAll','keyList','writeText','forEach','20iTvlYA','bCYmN','toDRu','ass=\x22key-b','mEnJP','lay','PzIrP','1328586NCFeAp','random','UPELb','min','rgba(255,2','hypot'];_0x45ed=function(){return _0xc03f9c;};return _0x45ed();}function launch(_0x4cd354){const _0x4817a7=_0x96737f,_0x28258b={'FhoDu':_0x4817a7(0x128),'FBGle':function(_0x7861d5,_0x58ed19,_0xb0353f){return _0x7861d5(_0x58ed19,_0xb0353f);},'PzIrP':function(_0x1ad8c2,_0xa9b932){return _0x1ad8c2+_0xa9b932;},'rWkRp':_0x4817a7(0x19e)+_0x4817a7(0x17f),'EXxrE':_0x4817a7(0x1a0)+'e','rWvIY':function(_0x162efb,_0x51c7b1,_0x58e848){return _0x162efb(_0x51c7b1,_0x58e848);}},_0x54268f=document[_0x4817a7(0x174)+_0x4817a7(0x169)](_0x28258b[_0x4817a7(0x18b)]),_0x1a8831=document[_0x4817a7(0x174)+_0x4817a7(0x169)](_0x28258b[_0x4817a7(0x170)]);_0x54268f[_0x4817a7(0x165)][_0x4817a7(0x117)](_0x28258b[_0x4817a7(0x11c)]),_0x28258b[_0x4817a7(0x198)](setTimeout,()=>{const _0x547f6d=_0x4817a7,_0x1708c2={'UInQM':function(_0x4412cf,_0x464ede,_0x55407f){const _0xda9e09=_0x2409;return _0x28258b[_0xda9e09(0x131)](_0x4412cf,_0x464ede,_0x55407f);}};_0x1a8831[_0x547f6d(0x19d)]=_0x28258b[_0x547f6d(0x180)](location[_0x547f6d(0x18f)],_0x4cd354),_0x1a8831[_0x547f6d(0x12a)][_0x547f6d(0x16c)]=0x1a19+0x3*0x1d3+-0x3*0xa86,_0x1a8831[_0x547f6d(0x190)]=()=>{const _0x568818=_0x547f6d,_0x199517={'UvLeY':_0x28258b[_0x568818(0x11c)]};_0x28258b[_0x568818(0x131)](setTimeout,()=>{const _0x190531=_0x568818;_0x1a8831[_0x190531(0x12a)][_0x190531(0x16c)]=-0x8d6+-0x1*0x20ed+0x29c4,_0x1708c2[_0x190531(0x155)](setTimeout,()=>{const _0xadbbd9=_0x190531;_0x54268f[_0xadbbd9(0x165)][_0xadbbd9(0x19f)](_0x199517[_0xadbbd9(0x13e)]);},-0x26e9*0x1+0x2257+0xf5*0x6);},-0x24bc+0xf3b+0x15d1);};},-0x930+0x926+0x9b*0x2);}
+</script>
+<script>
+/* ════ ADVANCED UI SELF-HEAL SYSTEM ════ */
+(function() {
+
+  const CLICKABLE = 'button, a, input, textarea, select, .menu-btn, .key-row, [onclick]';
+
+  /* ── 1. Find what's ACTUALLY blocking clicks ── */
+  function getBlocker(x, y) {
+    const stack = document.elementsFromPoint(x, y);
+    if (!stack || stack.length < 2) return null;
+
+    const top = stack[0];
+    const next = stack.find(el => el.matches && el.matches(CLICKABLE));
+
+    if (!next) return null;
+
+    // If clickable isn't top, something is blocking it
+    if (top !== next) return top;
+
+    return null;
+  }
+
+  /* ── 2. Disable only REAL blockers ── */
+  function neutralize(el) {
+    if (!el || el._neutralized) return;
+    el._neutralized = true;
+
+    el.dataset._oldPointer = el.style.pointerEvents;
+    el.style.pointerEvents = 'none';
+
+    // optional: reduce z-index instead of nuking
+    if (getComputedStyle(el).zIndex > 10) {
+      el.dataset._oldZ = el.style.zIndex;
+      el.style.zIndex = 1;
+    }
+  }
+
+  /* ── 3. Smart click rerouting ── */
+  document.addEventListener('click', function(e) {
+    const { clientX:x, clientY:y } = e;
+
+    const blocker = getBlocker(x, y);
+
+    if (blocker) {
+      neutralize(blocker);
+
+      // Retry click on actual target
+      const realTarget = document.elementFromPoint(x, y);
+      if (realTarget && realTarget !== blocker) {
+        realTarget.click();
+      }
+    }
+  }, true);
+
+  /* ── 4. Fix stacking context issues ── */
+  function fixStacking() {
+    document.querySelectorAll(CLICKABLE).forEach(el => {
+      const style = getComputedStyle(el);
+
+      if (style.position === 'static') {
+        el.style.position = 'relative';
+      }
+
+      if (!el.style.zIndex || el.style.zIndex < 5) {
+        el.style.zIndex = 5;
+      }
+
+      el.style.pointerEvents = 'auto';
+    });
+  }
+
+  /* ── 5. Mutation observer (auto-heal new UI) ── */
+  const observer = new MutationObserver(() => {
+    fixStacking();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  /* ── 6. Fix known problem elements ── */
+  function fixKnown() {
+    const overlay = document.getElementById('launchOverlay');
+    if (overlay) overlay.style.pointerEvents = 'none';
+
+    const frame = document.getElementById('launchFrame');
+    if (frame) {
+      frame.style.pointerEvents = 'auto';
+      frame.style.zIndex = 999;
+    }
+
+    const canvas = document.getElementById('canvas');
+    if (canvas) canvas.style.pointerEvents = 'none';
+  }
+
+  /* ── 7. Hover-based pre-fix (feels instant) ── */
+  document.addEventListener('mousemove', e => {
+    const blocker = getBlocker(e.clientX, e.clientY);
+    if (blocker) neutralize(blocker);
+  });
+
+  /* ── 8. Initial run + interval safety ── */
+  function init() {
+    fixStacking();
+    fixKnown();
+  }
+
+  init();
+  setInterval(init, 2000);
+
+})();
+</script>
+</body>
+</html>
