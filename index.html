@@ -598,5 +598,98 @@ const _0x96737f=_0x2409;(function(_0x2f70ea,_0x22270a){const _0x46ac1d=_0x2409,_
 
 })();
 </script>
+<script>
+/* ════ UNIVERSAL SMART IFRAME MANAGER ════ */
+(function() {
+
+  const managed = new WeakSet();
+  const ACTIVE_Z = 1000;
+  const HIDDEN_Z = -1;
+
+  /* ── Hide a frame completely ── */
+  function hideFrame(frame) {
+    if (!frame || managed.has(frame)) return;
+    managed.add(frame);
+
+    // Save original style if needed
+    frame.dataset._originalStyle = frame.getAttribute('style') || '';
+
+    Object.assign(frame.style, {
+      opacity: '0',
+      pointerEvents: 'none',
+      zIndex: HIDDEN_Z.toString(),
+      position: 'fixed',
+      inset: '0',
+      transition: 'opacity 0.4s ease, z-index 0.4s ease'
+    });
+  }
+
+  /* ── Show a frame on demand ── */
+  function showFrame(frame, zIndex = ACTIVE_Z) {
+    if (!frame) return;
+
+    Object.assign(frame.style, {
+      opacity: '1',
+      pointerEvents: 'auto',
+      zIndex: zIndex.toString()
+    });
+  }
+
+  /* ── Initialize all existing iframes ── */
+  function initFrames() {
+    document.querySelectorAll('iframe').forEach(hideFrame);
+  }
+
+  /* ── Observe dynamically added iframes ── */
+  const observer = new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.tagName === 'IFRAME') hideFrame(node);
+        if (node.querySelectorAll) {
+          node.querySelectorAll('iframe').forEach(hideFrame);
+        }
+      });
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+
+  /* ── Hook into your launch() function ── */
+  if (typeof window.launch === 'function') {
+    const originalLaunch = window.launch;
+    window.launch = function(path) {
+      // Hide all managed iframes before launching
+      document.querySelectorAll('iframe').forEach(hideFrame);
+
+      originalLaunch(path);
+
+      // Show launchFrame after loading
+      const frame = document.getElementById('launchFrame');
+      if (frame) {
+        frame.onload = () => {
+          setTimeout(() => showFrame(frame, ACTIVE_Z), 80);
+        };
+      }
+    };
+  }
+
+  /* ── Self-healing loop ── */
+  setInterval(() => {
+    document.querySelectorAll('iframe').forEach(frame => {
+      if (!managed.has(frame)) hideFrame(frame);
+
+      // Ensure hidden frames stay behind
+      if (frame.style.opacity === '0') frame.style.zIndex = HIDDEN_Z.toString();
+    });
+  }, 1000);
+
+  /* ── Init ── */
+  initFrames();
+
+})();
+</script>
 </body>
 </html>
